@@ -1,6 +1,8 @@
 # EVM384 Gas Benchmarking
 
-**WIP** - quick experiment which estimates pricing for evm384 opcodes
+A quick experiment which estimates pricing for evm384 opcodes
+
+## Explanation
 
 Two benchmarks:
 1) PUSH16 000…000 POP
@@ -20,9 +22,10 @@ Then we take the time (t2) it took to run 2) and calculate total\_gas = t2 / (t1
 ```
 git submodule update --init
 (cd go-ethereum && make all)
+(cd evmone && git submodule update --init && mkdir build && cd build && cmake -DEVMONE_TESTING=ON .. && make -j4)
 ```
 
-### Estimate EVM384 pricing for evmone and Geth
+### Estimate EVM384 v7 opcode pricing for evmone and Geth
 ```
 make benchmark
 ```
