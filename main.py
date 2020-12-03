@@ -1,9 +1,11 @@
+import shlex
 import subprocess
 import os
+import json
 
 geth_dir = os.path.join(os.getcwd(), "go-ethereum")
 evmone_dir = os.path.join(os.getcwd(), "evmone")
-evmone_bench_cmd = "{}/build/bin/evmone-bench".format(evmone_dir) + " --benchmark_format=json --benchmark_color=false --benchmark_min_time=5 {} 00 \"\""
+evmone_bench_cmd = "{}/build/bin/evmone-bench".format(evmone_dir) + " --benchmark_format=json --benchmark_color=false {} 00 \"\""
 geth_evm_cmd = "{}/build/bin/evm".format(geth_dir) +  " --statdump --codefile {} --bench run"
 
 pushpop_file = "pushpop_bench.hex"
@@ -43,18 +45,24 @@ def parse_geth_output(geth_output):
 # geth evm bench tool outputs everything in stderr.. so that's fun
 def invoke_geth_evm(engine_cmd):
     proc = subprocess.Popen(engine_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
     _, output = proc.communicate()
-
     return output.decode('utf-8')
 
+def parse_evmone_output(evmone_output):
+    output_json = json.loads("".join(evmone_output.split('\n')[1:]))
+    time = str(output_json['benchmarks'][0]['real_time']) + output_json['benchmarks'][0]['time_unit']
+    time = nanoduration.from_str(time)
+    gas = int(output_json['benchmarks'][0]['gas_used'])
+    return gas, time
+
 def invoke_evmone(engine_cmd):
-    proc = subprocess.Popen(engine_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(shlex.split(engine_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    output, err= proc.communicate()
+    output, stderr = proc.communicate()
+
     # TODO throw if err
-
-    return output
+    
+    return output.decode('utf-8')
 
 def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
     engine_cmd = ""
@@ -71,8 +79,8 @@ def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
         pushpop_bench_output = invoke_geth_evm(pushpop_bench_cmd)
         pushpop_bench_gas, pushpop_bench_time = parse_geth_output(pushpop_bench_output)
     elif engine == "evmone":
-        pushpop_lines = invoke_evmone(pushpop_bench_cmd)
-        pushpop_bench_gas, pushpop_bench_time = parse_evmone_output(evmone_lines)
+        pushpop_bench_output = invoke_evmone(pushpop_bench_cmd)
+        pushpop_bench_gas, pushpop_bench_time = parse_evmone_output(pushpop_bench_output)
 
     # get pushpop_bench_gas, pushpop_bench_time
 
@@ -85,6 +93,7 @@ def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
         evm384push_bench_gas, evm384push_bench_time = parse_geth_output(evm384push_lines)
     elif engine == "evmone":
         evm384push_lines = invoke_evmone(evm384push_bench_cmd)
+        evm384push_bench_gas, evm384push_bench_time = parse_evmone_output(evm384push_lines)
 
     # get evm384push_bench_time, evm384push_gas
 
@@ -123,4 +132,4 @@ def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_ben
 if __name__ == "__main__":
     for opname, bench_file in evm384_op_bench_files.items():
         bench_engine("geth", opname, bench_file)
-        # bench_engine("evmone", opname, bench_file)
+        bench_engine("evmone", opname, bench_file)
