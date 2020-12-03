@@ -9,6 +9,12 @@ geth_evm_cmd = "{}/build/bin/evm".format(geth_dir) +  " --statdump --codefile {}
 pushpop_file = "pushpop_bench.hex"
 evm384push_file = "evm384push_bench.hex"
 
+evm384_op_bench_files = {
+    'addmod384': 'evm384_addmod5000.hex',
+    'mulmodmont384': 'evm384_mulmodmont5000.hex',
+    'submod384': 'evm384_submod5000.hex',
+}
+
 from datetime import datetime
 
 import nanoduration
@@ -50,7 +56,7 @@ def invoke_evmone(engine_cmd):
 
     return output
 
-def bench_engine(engine):
+def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
     engine_cmd = ""
     if engine == "geth":
         engine_cmd = geth_evm_cmd
@@ -70,7 +76,7 @@ def bench_engine(engine):
 
     # get pushpop_bench_gas, pushpop_bench_time
 
-    evm384push_bench_cmd = engine_cmd.format(evm384push_file)
+    evm384push_bench_cmd = engine_cmd.format(evm384_bench_code_file)
     evm384push_lines = None
     evm384push_bench_gas, evm384push_bench_time = None, None
 
@@ -83,7 +89,7 @@ def bench_engine(engine):
     # get evm384push_bench_time, evm384push_gas
 
     evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
-    print("estimated gas for mulmodmont in {} is {}".format(engine, evm384_estimated_gas))
+    print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
 
 def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, num_bench_iterations):
 # n = 5000
@@ -115,5 +121,6 @@ def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_ben
 # n = 5000
 
 if __name__ == "__main__":
-    bench_engine("geth")
-    # bench_engine("evmone", geth_evm_cmd)
+    for opname, bench_file in evm384_op_bench_files.items():
+        bench_engine("geth", opname, bench_file)
+        # bench_engine("evmone", opname, bench_file)
