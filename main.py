@@ -13,13 +13,28 @@ def invoke_cmd(engine_cmd):
 evmone_bench_cmd = "{}/build/bin/evmone-bench".format(evmone_dir) + " --benchmark_format=json --benchmark_color=false --benchmark_min_time=5 {} 00 \"\""
 geth_evm_cmd = "{}/build/bin/evm".format(geth_dir) +  " --statdump --codefile {} --bench"
 
+pushpop_file = "..."
+evm384push_file = "..."
+
+def invoke_engine(engine, cmd):
+    if engine == "geth":
+        pass
+    elif engine == "evmone":
+        pass
+
+def parse_output(engine, cmd):
+    if engine == "geth":
+        pass
+    elif engine == "evmone":
+        pass
+
 def bench_engine(name, cmd):
     # format cmd ...
     # engine_cmd = ...
-    pushpop_lines = invoke_cmd(engine_cmd.format(pushpop_file))
-    evm384push_lines = invoke_cmd(engine_cmd.format(evm384push_file))
+    pushpop_lines = invoke_engine(engine_cmd.format(pushpop_file))
+    evm384push_lines = invoke_engine(engine_cmd.format(evm384push_file))
 
-    bench_result = estimate_evm384_gas(parse_result(pushpop_lines, evm384push_lines))
+    bench_result = estimate_evm384_gas(parse_output(name, pushpop_lines, evm384push_lines))
 
     # print bench_result
 
