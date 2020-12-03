@@ -70,7 +70,6 @@ def bench_engine(engine):
 
     # get pushpop_bench_gas, pushpop_bench_time
 
-    import pdb; pdb.set_trace()
     evm384push_bench_cmd = engine_cmd.format(evm384push_file)
     evm384push_lines = None
     evm384push_bench_gas, evm384push_bench_time = None, None
@@ -87,8 +86,6 @@ def bench_engine(engine):
     print("estimated gas for mulmodmont in {} is {}".format(engine, evm384_estimated_gas))
 
 def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, num_bench_iterations):
-    pass
-
 # n = 5000
     # pushpop_time = pushpop_bench_time / num_bench_iterations
     # evm384push_time = evm384_bench_time / num_bench_iterations
@@ -109,7 +106,7 @@ def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_ben
     evm384push_bench_time /= num_bench_iterations
     pushpop_bench_time /= num_bench_iterations
 
-    return ((evm384push_bench_time * (push16_gas + pop_gas) ) / pushpop_bench_time ) - push16_gas
+    return int(((evm384push_bench_time * (push16_gas + pop_gas) ) / pushpop_bench_time ) - push16_gas)
 
 
 # engine_time_avg = push_gas + pop_gas
