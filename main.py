@@ -12,9 +12,10 @@ pushpop_file = "pushpop_bench.hex"
 evm384push_file = "evm384push_bench.hex"
 
 evm384_op_bench_files = {
-    'addmod384': 'evm384_addmod5000.hex',
+    #'addmod384': 'evm384_addmod5000.hex',
     'mulmodmont384': 'evm384_mulmodmont5000.hex',
-    'submod384': 'evm384_submod5000.hex',
+    #'submod384': 'evm384_submod5000.hex',
+    'keccak': 'keccak5000_bench.hex'
 }
 
 from datetime import datetime
@@ -46,7 +47,9 @@ def parse_geth_output(geth_output):
 def invoke_geth_evm(engine_cmd):
     proc = subprocess.Popen(engine_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, output = proc.communicate()
-    return output.decode('utf-8')
+    result = output.decode('utf-8')
+    print("geth output from {} is {}".format(engine_cmd, result))
+    return result
 
 def parse_evmone_output(evmone_output):
     output_json = json.loads("".join(evmone_output.split('\n')[1:]))
@@ -57,12 +60,13 @@ def parse_evmone_output(evmone_output):
 
 def invoke_evmone(engine_cmd):
     proc = subprocess.Popen(shlex.split(engine_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
     output, stderr = proc.communicate()
 
     # TODO throw if err
     
-    return output.decode('utf-8')
+    result = output.decode('utf-8')
+    print("evmone output from {} is {}".format(engine_cmd, result))
+    return result
 
 def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
     engine_cmd = ""
@@ -70,19 +74,6 @@ def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
         engine_cmd = geth_evm_cmd
     elif engine == "evmone":
         engine_cmd = evmone_bench_cmd
-
-    pushpop_bench_cmd = engine_cmd.format(pushpop_file)
-    pushpop_bench_output = None
-    pushpop_bench_gas, pushpop_bench_time = None, None
-
-    if engine == "geth":
-        pushpop_bench_output = invoke_geth_evm(pushpop_bench_cmd)
-        pushpop_bench_gas, pushpop_bench_time = parse_geth_output(pushpop_bench_output)
-    elif engine == "evmone":
-        pushpop_bench_output = invoke_evmone(pushpop_bench_cmd)
-        pushpop_bench_gas, pushpop_bench_time = parse_evmone_output(pushpop_bench_output)
-
-    # get pushpop_bench_gas, pushpop_bench_time
 
     evm384push_bench_cmd = engine_cmd.format(evm384_bench_code_file)
     evm384push_lines = None
@@ -97,8 +88,8 @@ def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
 
     # get evm384push_bench_time, evm384push_gas
 
-    evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
-    print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
+    # evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
+    # print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
 
 def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, num_bench_iterations):
 # n = 5000
@@ -106,7 +97,7 @@ def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_ben
     # evm384push_time = evm384_bench_time / num_bench_iterations
 
     push16_gas = 3
-    pop_gas = 2
+    pop_gas = 1
 
     # evm384_push_time == evm384_gas + push16_gas
     # pushpop_time == push16_gas + pop_gas
@@ -121,6 +112,7 @@ def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_ben
     evm384push_bench_time /= num_bench_iterations
     pushpop_bench_time /= num_bench_iterations
 
+    #import pdb; pdb.set_trace()
     return int(((evm384push_bench_time * (push16_gas + pop_gas) ) / pushpop_bench_time ) - push16_gas)
 
 
