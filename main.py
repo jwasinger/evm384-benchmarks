@@ -16,7 +16,8 @@ evm384_op_bench_files = {
     'mulmodmont384_5000': 'evm384_mulmodmont50000.hex',
     'mulmodmont384_50000': 'evm384_mulmodmont50000.hex',
     #'submod384': 'evm384_submod5000.hex',
-    'keccak': 'keccak5000_bench.hex'
+    'keccak_5000': 'keccak5000_bench.hex',
+    'keccak_50000': 'keccak50000_bench.hex',
 }
 
 from datetime import datetime
@@ -89,8 +90,8 @@ def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
 
     # get evm384push_bench_time, evm384push_gas
 
-    evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
-    print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
+    # evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
+    # print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
 
 def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, num_bench_iterations):
 # n = 5000
