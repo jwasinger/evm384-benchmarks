@@ -13,7 +13,7 @@ evm384push_file = "evm384push_bench.hex"
 
 evm384_op_bench_files = {
     #'addmod384': 'evm384_addmod5000.hex',
-    'mulmodmont384_5000': 'evm384_mulmodmont50000.hex',
+    'mulmodmont384_5000': 'evm384_mulmodmont5000.hex',
     'mulmodmont384_50000': 'evm384_mulmodmont50000.hex',
     #'submod384': 'evm384_submod5000.hex',
     'keccak_5000': 'keccak5000_bench.hex',
