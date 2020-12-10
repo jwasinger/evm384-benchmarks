@@ -16,8 +16,12 @@ evm384_op_bench_files = {
     'mulmodmont384_5000': 'evm384_mulmodmont5000.hex',
     'mulmodmont384_50000': 'evm384_mulmodmont50000.hex',
     #'submod384': 'evm384_submod5000.hex',
-    'keccak_5000': 'keccak5000_bench.hex',
-    'keccak_50000': 'keccak50000_bench.hex',
+    'keccak32_5000': 'keccak32_5000_bench.hex',
+    'keccak32_50000': 'keccak32_50000_bench.hex',
+    'keccak136_5000': 'keccak136_5000_bench.hex',
+    'keccak136_50000': 'keccak136_50000_bench.hex',
+    'keccak192_5000': 'keccak192_5000_bench.hex',
+    'keccak192_50000': 'keccak192_50000_bench.hex',
 }
 
 from datetime import datetime
@@ -126,4 +130,4 @@ def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_ben
 if __name__ == "__main__":
     for opname, bench_file in evm384_op_bench_files.items():
         bench_engine("geth", opname, bench_file)
-        bench_engine("evmone", opname, bench_file)
+        # bench_engine("evmone", opname, bench_file)
