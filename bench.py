@@ -50,7 +50,8 @@ def parse_geth_output(geth_output):
     return gas, time
 
 # geth evm bench tool outputs everything in stderr.. so that's fun
-def invoke_geth_evm(engine_cmd):
+def invoke_geth_evm(bench_code_file):
+    engine_cmd = geth_evm_cmd.format(bench_code_file)
     proc = subprocess.Popen(engine_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, output = proc.communicate()
     result = output.decode('utf-8')
@@ -74,6 +75,7 @@ def invoke_evmone(engine_cmd):
     print("evmone output from {} is {}".format(engine_cmd, result))
     return result
 
+# TODO run an evm benchmark and return bench_gas, bench_time
 def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
     engine_cmd = ""
     if engine == "geth":
@@ -94,40 +96,41 @@ def bench_engine(engine, evm384_op_name, evm384_bench_code_file):
 
     # get evm384push_bench_time, evm384push_gas
 
-    # evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
-    # print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
+    evm384_estimated_gas = estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, 5000)
+    print("estimated gas cost for {} in {} is {}".format(evm384_op_name, engine, evm384_estimated_gas))
 
-def estimate_evm384_gas(evm384push_bench_gas, evm384push_bench_time, pushpop_bench_gas, pushpop_bench_time, num_bench_iterations):
-# n = 5000
-    # pushpop_time = pushpop_bench_time / num_bench_iterations
-    # evm384push_time = evm384_bench_time / num_bench_iterations
+def estimate_evm384_gas(evm384_bench_time, evm_bench_time, evm_bench_gas, num_iterations):
+    push_gas = 3
 
-    push16_gas = 3
-    pop_gas = 1
+    evm384_bench_time /= num_iterations
+    evm_bench_time /= num_iterations
+    evm_bench_gas /= num_iterations # doesn't include initial mstore overhead
 
-    # evm384_push_time == evm384_gas + push16_gas
-    # pushpop_time == push16_gas + pop_gas
-
-    # gas_rate = pushpop_time / push_bench_gas = evm384_push_time / evm384_bench_time
-    #   = pushpop_time / (push16_gas + pop_gas) == evm384_push_time / (evm384_gas + push16_gas)
-    #   (evm384_gas + push16_gas) / (push16_gas + pop_gas) = evm384_push_time / pushpop_time
-    #   (evm384_gas + push16_gas) = (evm384_push_time * (push16_gas + pop_gas) ) / pushpop_time
-    #   ---
-    #   evm384_gas = ((evm384_push_time * (push16_gas + pop_gas) ) / pushpop_time ) - push16_gas
-
-    evm384push_bench_time /= num_bench_iterations
-    pushpop_bench_time /= num_bench_iterations
-
-    #import pdb; pdb.set_trace()
-    return int(((evm384push_bench_time * (push16_gas + pop_gas) ) / pushpop_bench_time ) - push16_gas)
-
+    return ((evm_bench_time * evm_bench_gas) / evm384_bench_time) - push_gas 
 
 # engine_time_avg = push_gas + pop_gas
 # t1 / n * (push_gas + pop_gas) = t2 / n * (evm384_gas  + push_gas)
 
 # n = 5000
 
+def bench_op(opname, num_iters, input_size=None, engine_bench_fn=invoke_geth_evm, engine_bench_parse=parse_geth_output):
+    if not input_size:
+        input_size = ""
+    bench_name = "{}{}_{}_bench.hex".format(opname,input_size,num_iters)
+    engine_output = engine_bench_fn(bench_name)
+    return engine_bench_parse(engine_output)
+
+def bench_mulmontmod384_keccak(engine):
+    for bench_iter_count in [5000, 50000]:
+        _, evm384_time = bench_op("evm384_mulmodmont", bench_iter_count)
+
+        for keccak_input_size in [32, 136, 148]:
+            keccak_gas, keccak_time = bench_op("keccak", bench_iter_count, input_size=keccak_input_size)
+
+            import pdb; pdb.set_trace()
+            evm384_estimated = estimate_evm384_gas(evm384_time, keccak_time, keccak_gas, bench_iter_count)
+            print(evm384_estimated)
+
+
 if __name__ == "__main__":
-    for opname, bench_file in evm384_op_bench_files.items():
-        bench_engine("geth", opname, bench_file)
-        # bench_engine("evmone", opname, bench_file)
+    bench_mulmontmod384_keccak("geth")
