@@ -22,7 +22,8 @@ def gen_keccak_bench_bytecode(size=32,n=1):
 
   for _ in range(n):
     #       PUSH 00 PUSH size_hex  SHA3 POP
-    code += "600060" + size_hex + "2050"
+    # code += "600060" + size_hex + "2050"
+    code += "60" + size_hex + "60002050"
 
   return code
 
@@ -38,4 +39,4 @@ if __name__ == "__main__":
   save_benchmark('keccak136_50000_bench.hex', gen_keccak_bench_bytecode(size=136,n=50000))
 
   save_benchmark('keccak192_5000_bench.hex', gen_keccak_bench_bytecode(size=192,n=5000))
-  save_benchmark('keccak192_50000_bench.hex', gen_keccak_bench_bytecode(size=192,n=50000))
+  save_benchmark('keccak192_50000_bench.hex', gen_keccak_bench_bytecode(size=192,n=5000))

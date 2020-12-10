@@ -1,2 +1,2 @@
 benchmark:
-	python3 main.py
+	python3 bench.py
