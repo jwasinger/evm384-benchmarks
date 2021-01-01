@@ -95,7 +95,7 @@ def bench_op(opname, num_iters, input_size=None, engine_bench_fn=invoke_geth_evm
     if not input_size:
         input_size = ""
     bench_name = "{}{}_{}_bench.hex".format(opname,input_size,num_iters)
-    engine_output = engine_bench_fn(bench_name)
+    engine_output = engine_bench_fn("benchmarks/"+bench_name)
     return engine_bench_parse_fn(engine_output)
 
 def bench_mulmontmod384_keccak(engine):
