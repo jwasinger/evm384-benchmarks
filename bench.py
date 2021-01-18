@@ -69,27 +69,17 @@ def invoke_evmone(bench_code_file):
     engine_cmd = evmone_bench_cmd.format(bench_code_file)
     proc = subprocess.Popen(shlex.split(engine_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, stderr = proc.communicate()
-
-    # TODO throw if err
     
     result = output.decode('utf-8')
-    # print("evmone output from {} is {}".format(engine_cmd, result))
     return result
 
-def estimate_evm384_gas(evm384_bench_time, evm_bench_time, evm_bench_gas, num_iterations):
-    push_gas = 3
+def estimate_evm384_gas_keccak(evm384_bench_time, evm_bench_time, evm_bench_gas, num_iterations):
+    # evm_gas = ((PUSH_COST + PUSH_COST + KECCAK_COST) * num_iterations)
+    # evm_gas / evm_bench_time == ((PUSH_COST + EVM384_OP_COST) * num_iterations) / evm384_bench_time
 
-    # evm384_bench_time /= num_iterations
-    # evm_bench_time /= num_iterations
-
-    # evm_bench_gas /= num_iterations # doesn't include initial mstore overhead
-
-    return ((evm384_bench_time * evm_bench_gas) / (evm_bench_time * num_iterations)) - push_gas 
-
-# engine_time_avg = push_gas + pop_gas
-# t1 / n * (push_gas + pop_gas) = t2 / n * (evm384_gas  + push_gas)
-
-# n = 5000
+    # re-arrange to solve for EVM384
+    # EVM384_OP_COST = ((evm_gas * evm384_bench_time) / (evm_bench_time * num_iterations)) - PUSH_COST
+    return ((evm_bench_gas * evm384_bench_time) / (evm_bench_time * num_iterations)) - 3
 
 def bench_op(opname, num_iters, input_size=None, engine_bench_fn=invoke_geth_evm, engine_bench_parse_fn=parse_geth_output):
     if not input_size:
@@ -100,18 +90,20 @@ def bench_op(opname, num_iters, input_size=None, engine_bench_fn=invoke_geth_evm
 
 def bench_mulmontmod384_keccak(engine):
     for bench_iter_count in [5000, 50000]:
-        _, evm384_time = bench_op("evm384_mulmodmont", bench_iter_count)
+        for bench_type in ["evm384_addmod", "evm384_submod", "evm384_mulmodmont"]:
+            _, evm384_time = bench_op(bench_type, bench_iter_count)
 
-        for keccak_input_size in [32, 136, 192]:
-            keccak_gas, keccak_time = bench_op("keccak", bench_iter_count, input_size=keccak_input_size)
+            for keccak_input_size in [32, 136, 192]:
+                keccak_gas, keccak_time = bench_op("keccak", bench_iter_count, input_size=keccak_input_size)
 
-            evm384_estimated = estimate_evm384_gas(evm384_time, keccak_time, keccak_gas, bench_iter_count)
-            print("geth mulmodmont384 cost estimated against keccak ({} byte input, {} iterations): {}".format(keccak_input_size, bench_iter_count, evm384_estimated))
+                # import pdb; pdb.set_trace()
+                evm384_estimated = estimate_evm384_gas_keccak(evm384_time, keccak_time, keccak_gas, bench_iter_count)
+                print("geth {} cost estimated against keccak ({} byte input, {} iterations): {}".format(bench_type, keccak_input_size, bench_iter_count, evm384_estimated))
 
-            keccak_gas, keccak_time = bench_op("keccak", bench_iter_count, input_size=keccak_input_size,engine_bench_fn=invoke_evmone, engine_bench_parse_fn=parse_evmone_output)
+                keccak_gas, keccak_time = bench_op("keccak", bench_iter_count, input_size=keccak_input_size,engine_bench_fn=invoke_evmone, engine_bench_parse_fn=parse_evmone_output)
 
-            evm384_estimated = estimate_evm384_gas(evm384_time, keccak_time, keccak_gas, bench_iter_count)
-            print("evmone mulmodmont384 cost estimated against keccak ({} byte input, {} iterations): {}".format(keccak_input_size, bench_iter_count, evm384_estimated))
+                evm384_estimated = estimate_evm384_gas_keccak(evm384_time, keccak_time, keccak_gas, bench_iter_count)
+                print("evmone {} cost estimated against keccak ({} byte input, {} iterations): {}".format(bench_type, keccak_input_size, bench_iter_count, evm384_estimated))
 
 
 if __name__ == "__main__":
